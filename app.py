@@ -52,14 +52,14 @@ def precipitation():
     session = Session(engine)
     results = session.query(Measurement.date, Measurement.prcp).all()
 
-    all_prcp = []
+    precipitation = []
     for date, prcp in results:
-        all_dict = {}
-        all_dict["date"] = date
-        all_dict["prcp"] = prcp
-        all_prcp.append(all_dict)
+        dictionary = {}
+        dictionary["date"] = date
+        dictionary["prcp"] = prcp
+        precipitation.append(dictionary)
 
-    return jsonify(all_prcp)
+    return jsonify(precipitation)
 
 @app.route("/api/v1.0/stations")
 def stations():
@@ -78,34 +78,37 @@ def tobs():
 
     last=session.query(Measurement.date).order_by(Measurement.date.desc()).first()
     laststr=str(last[0])
-    lastdate=datetime.strptime(laststr , '%Y-%m-%d')
-    year_ago = lastdate - dt.timedelta(days=365)
-    results = session.query(Measurement.date, Measurement.tobs).filter(Measurement.date >= year_ago).filter(Measurement.date <= lastdate).order_by(Measurement.date).all()
-    all_tobs = []
+    last_date=datetime.strptime(laststr , '%Y-%m-%d')
+    year_ago = last_date - dt.timedelta(days=365)
+    results = session.query(Measurement.date, Measurement.tobs).filter(Measurement.date >= year_ago).filter(Measurement.date <= last_date).order_by(Measurement.date).all()
+    
+    tobs_list = []
     for date, tobs in results:
-        all_dict = {}
-        all_dict["date"] = date
-        all_dict["tobs"] = tobs
-        all_tobs.append(all_dict)
+        dictionary = {}
+        dictionary["date"] = date
+        dictionary["tobs"] = tobs
+        tobs_list.append(dictionary)
 
-    return jsonify(all_tobs)
+    return jsonify(tobs_list)
 
-@app.route("/api/v1.0/<start>")
-def weather(start):
+@app.route("/api/v1.0/<start_date>")
+def weather(start_date):
 
     session = Session(engine)
-    resultsdate = session.query(Measurement.date)
-    all_dates = list(np.ravel(resultsdate))
+
+    results_date = session.query(Measurement.date)
+    all_dates = list(np.ravel(results_date))
     results = session.query(func.min(Measurement.tobs).label('min_tobs'), func.avg(Measurement.tobs).label('avg_tobs'), func.max(Measurement.tobs).label('max_tobs')).filter(Measurement.date>=start).all()
     all_results = list(np.ravel(results))
     return jsonify(all_results)
 
     
 
-@app.route("/api/v1.0/<start>/<end>")
-def weather2(start, end):
+@app.route("/api/v1.0/<start_date>/<end_date>")
+def weather2(start_date, end_date):
 
     session = Session(engine)
+    
     results = session.query(func.min(Measurement.tobs).label('min_tobs'), func.avg(Measurement.tobs).label('avg_tobs'), func.max(Measurement.tobs).label('max_tobs')).filter(Measurement.date>=start).filter(Measurement.date <= end).all()
     all_results = list(np.ravel(results))
     return jsonify(all_results)
